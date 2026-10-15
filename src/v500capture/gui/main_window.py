@@ -338,9 +338,10 @@ class MainWindow(QMainWindow):
             self.dpi_combo.blockSignals(False)
         fitting = [d for d in choices if d <= self._wanted_dpi]
         self.dpi_combo.setCurrentIndex(choices.index(fitting[-1] if fitting else choices[0]))
-        if limit is not None:
+        trimmed = limit is not None and limit < DPI_CHOICES[-1]
+        if trimmed:
             self.dpi_hint.setText(f"This scanner allows up to {limit} dpi.")
-        self.dpi_hint.setVisible(limit is not None)
+        self.dpi_hint.setVisible(trimmed)
         self._update_estimates()
 
     def test_scan(self) -> None:

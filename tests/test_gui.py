@@ -98,19 +98,20 @@ def test_main_window_smoke(qtbot, tmp_path, monkeypatch):
     assert (tmp_path / "settings.json").exists()
 
 
-@pytest.mark.parametrize("limit,expected_top,expected_current", [
-    ("1200", 1200, 1200),  # driver limit: higher resolutions are removed
-    ("0", 6400, 6400),     # driver doesn't say: everything is offered
+@pytest.mark.parametrize("limit,expected_top,hint", [
+    ("600", 600, True),     # driver limit below ours: higher resolutions are removed
+    ("1200", 1200, False),  # the V500 on Windows: matches the list, nothing to say
+    ("0", 1200, False),     # driver doesn't say: everything is offered
 ])
-def test_dpi_choices_follow_scanner(qtbot, tmp_path, monkeypatch, limit, expected_top, expected_current):
+def test_dpi_choices_follow_scanner(qtbot, tmp_path, monkeypatch, limit, expected_top, hint):
     monkeypatch.setenv("V500CAPTURE_DEMO_MAX_DPI", limit)
     monkeypatch.setattr(config, "settings_path", lambda: tmp_path / "settings.json")
     from v500capture.gui.main_window import MainWindow
 
-    win = MainWindow(config.Settings(folder=str(tmp_path), dpi=6400).normalized())
+    win = MainWindow(config.Settings(folder=str(tmp_path), dpi=1200).normalized())
     qtbot.addWidget(win)
     qtbot.waitUntil(lambda: win.device_combo.currentData() is not None, timeout=30_000)
     items = [win.dpi_combo.itemData(i) for i in range(win.dpi_combo.count())]
     assert max(items) == expected_top
-    assert win.dpi_combo.currentData() == expected_current
-    assert win.dpi_hint.isVisibleTo(win) == (limit != "0")
+    assert win.dpi_combo.currentData() == expected_top
+    assert win.dpi_hint.isVisibleTo(win) == hint

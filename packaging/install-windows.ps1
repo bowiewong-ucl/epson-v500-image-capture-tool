@@ -1,13 +1,15 @@
-# Installs the built app for the current Windows user (no admin rights needed):
-# copies dist\V500Capture.exe to %LOCALAPPDATA%\Programs\V500 Capture and adds
-# Desktop and Start menu shortcuts. Re-run after rebuilding to update.
+# Installs the app for the current Windows user (no admin rights needed):
+# copies V500Capture.exe (downloaded next to this script, or a local build in
+# ..\dist) to %LOCALAPPDATA%\Programs\V500 Capture and adds Desktop and Start
+# menu shortcuts. Re-run after downloading or building a new version to update.
 #
-#   powershell -ExecutionPolicy Bypass -File packaging\install-windows.ps1
-#   powershell -ExecutionPolicy Bypass -File packaging\install-windows.ps1 -Uninstall
+#   powershell -ExecutionPolicy Bypass -File install-windows.ps1
+#   powershell -ExecutionPolicy Bypass -File install-windows.ps1 -Uninstall
 param([switch]$Uninstall)
 
 $ErrorActionPreference = 'Stop'
-$source = Join-Path $PSScriptRoot '..\dist\V500Capture.exe'
+$source = @((Join-Path $PSScriptRoot 'V500Capture.exe'), (Join-Path $PSScriptRoot '..\dist\V500Capture.exe')) |
+    Where-Object { Test-Path $_ } | Select-Object -First 1
 $installDir = Join-Path $env:LOCALAPPDATA 'Programs\V500 Capture'
 $target = Join-Path $installDir 'V500Capture.exe'
 $shortcuts = @(
@@ -22,8 +24,9 @@ if ($Uninstall) {
     return
 }
 
-if (-not (Test-Path $source)) {
-    throw "Build the app first: pyinstaller packaging/v500capture.spec --noconfirm  (missing $source)"
+if (-not $source) {
+    throw ('V500Capture.exe not found. Put this script in the same folder as V500Capture.exe, ' +
+           'or build the app first: pyinstaller packaging/v500capture.spec --noconfirm')
 }
 if (Get-Process -Name 'V500Capture' -ErrorAction SilentlyContinue |
         Where-Object { $_.Path -eq $target }) {

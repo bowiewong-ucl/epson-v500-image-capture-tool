@@ -8,10 +8,10 @@ from pathlib import Path
 
 from platformdirs import user_config_dir, user_pictures_dir
 
-# Standard V500 resolutions, up to its 6400 dpi optical maximum (higher
-# settings in Epson Scan are interpolated and add no detail). A full-bed
-# colour scan at 6400 dpi is ~12 GB; it's the user's call.
-DPI_CHOICES = (75, 100, 150, 200, 300, 400, 600, 800, 1200, 1600, 2400, 3200, 4800, 6400)
+# Standard V500 resolutions up to 1200 dpi: the most Epson's Windows (WIA)
+# driver allows, checked on a real V500. The scanner's 6400 dpi optical
+# maximum is only reachable through Epson Scan, which this app can't drive.
+DPI_CHOICES = (75, 100, 150, 200, 300, 400, 600, 800, 1200)
 JPEG_MAX_SIDE = 65500  # pixels; JPEG can't store anything larger
 COLOR_CHOICES = ("color", "gray", "bw")
 FORMAT_CHOICES = ("tiff", "png", "jpeg")

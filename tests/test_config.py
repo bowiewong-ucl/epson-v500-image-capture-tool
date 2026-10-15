@@ -34,8 +34,10 @@ def test_estimate_scan_bytes():
 
 
 def test_max_dpi_offered():
-    assert config.DPI_CHOICES[-1] == 6400
-    assert config.estimate_scan_pixels(6400) == (54400, 74880)
+    assert config.DPI_CHOICES[-1] == 1200  # Epson's Windows driver limit
+    assert config.estimate_scan_pixels(1200) == (10200, 14040)
+    # A higher resolution saved by an older version falls back to the default.
+    assert config.Settings(folder="x", dpi=6400).normalized().dpi == 300
 
 
 def test_scan_timeout_grows_with_dpi():
