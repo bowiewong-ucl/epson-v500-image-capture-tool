@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "v500capture"
+version = "0.1.0"
+description = "Time-lapse image capture from an Epson Perfection V500 Photo scanner"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "PySide6>=6.6",
+    "Pillow>=10.1",
+    "platformdirs>=4",
+    "pywin32>=306; sys_platform == 'win32'",
+    "pyobjc-framework-ImageCaptureCore>=10; sys_platform == 'darwin'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-qt>=4.4", "pyinstaller>=6.5"]
+
+[project.gui-scripts]
+v500capture = "v500capture.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+v500capture = ["assets/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

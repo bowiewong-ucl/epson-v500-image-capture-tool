@@ -1,0 +1,31 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+*.partial
+.DS_Store
+
+# Never commit scans or capture logs
+*.tif
+*.tiff
+*.jpg
+*.jpeg
+scan_*.png
+scan_log.csv
+
+# Local tool settings and secrets
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+.vscode/
+.idea/
