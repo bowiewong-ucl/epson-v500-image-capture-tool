@@ -1,6 +1,6 @@
 import pytest
 
-from v500capture.scheduler import Scheduler
+from v500capture.scheduler import Scheduler, Tick
 
 START = 1_000_000.0
 MIN = 60.0
@@ -44,6 +44,23 @@ def test_end_time_stops_new_scans():
     assert s.poll(START + 40 * MIN, False).fire == 2
     assert s.next_time() is None  # slot 3 (60 min) is after the end
     assert s.poll(START + 50 * MIN, False).finished
+
+
+def test_slot_due_just_before_end_still_runs():
+    s = Scheduler(START, 20 * MIN, end=START + 40 * MIN + 0.5)
+    s.poll(START, False)
+    s.poll(START + 20 * MIN, False)
+    assert s.poll(START + 40 * MIN - 0.01, False).fire is None
+    tick = s.poll(START + 40 * MIN + 0.99, False)  # first poll to see slot 2 is past the end
+    assert tick.fire == 2 and tick.finished
+    assert s.poll(START + 40 * MIN + 2, False) == Tick(finished=True)
+
+
+def test_slots_before_end_logged_as_missed_after_sleep():
+    s = Scheduler(START, 20 * MIN, end=START + 50 * MIN)
+    s.poll(START, False)
+    tick = s.poll(START + 180 * MIN, False)  # asleep through the end time
+    assert tick.fire is None and tick.skipped == [1, 2] and tick.finished
 
 
 def test_remaining_slots():

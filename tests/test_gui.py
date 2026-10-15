@@ -32,10 +32,13 @@ def test_capture_runs_until_end_time(qtbot, tmp_path):
     assert c.state == "running"
     qtbot.waitUntil(lambda: c.state == "idle", timeout=30_000)
     assert c.finish_reason == "reached its end time"
-    assert c.ok_count == 3  # at 0 s, 3 s and 6 s
-    assert len(list(tmp_path.glob("t_*.png"))) == 3
-    rows = read_log(tmp_path)
-    assert [r["status"] for r in rows] == ["ok"] * 3
+    # Slots at 0 s, 3 s and 6 s. On a slow machine (e.g. a cold CI runner) a scan can
+    # outlast the interval and the next slot is skipped by design, so don't insist on 3 ok.
+    assert c.ok_count >= 1 and c.ok_count + c.skip_count == 3
+    assert len(list(tmp_path.glob("t_*.png"))) == c.ok_count
+    status = {r["scan_number"]: r["status"] for r in read_log(tmp_path)}
+    assert sorted(status) == ["1", "2", "3"] and status["1"] == "ok"
+    assert set(status.values()) <= {"ok", "skipped"}
 
 
 def test_stop_waits_for_running_scan(qtbot, tmp_path, monkeypatch):

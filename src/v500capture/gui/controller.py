@@ -140,10 +140,10 @@ class CaptureController(QObject):
             tick = self.scheduler.poll(time.time(), busy=self.job is not None)
             for index in tick.skipped:
                 self._record_skip(index, tick.skip_reason)
-            if tick.finished:
-                self.stop("reached its end time")
-            elif tick.fire is not None:
+            if tick.fire is not None:
                 self._start_scan(tick.fire)
+            if tick.finished:
+                self.stop("reached its end time")  # waits for a scan just started
         self.status_changed.emit()
 
     def _start_scan(self, index: int) -> None:

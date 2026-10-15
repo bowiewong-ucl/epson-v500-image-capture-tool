@@ -12,6 +12,10 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
+# Polls are about 1 s apart, so a slot due just before the end time may first be
+# seen just after it. It still runs if it's noticed within this many seconds.
+END_GRACE_S = 5.0
+
 
 @dataclass
 class Tick:
@@ -20,7 +24,7 @@ class Tick:
     fire: int | None = None  # slot index to scan now, if any
     skipped: list[int] = field(default_factory=list)  # slot indices given up on
     skip_reason: str = ""
-    finished: bool = False  # end time reached; start no more scans
+    finished: bool = False  # end time reached; start no more scans (after ``fire``, if set)
 
 
 class Scheduler:
@@ -57,17 +61,20 @@ class Scheduler:
         return math.ceil((self.end - t) / self.interval)
 
     def poll(self, now: float, busy: bool) -> Tick:
-        if self.is_finished(now):
-            return Tick(finished=True)
         if now < self.start:
             return Tick()
         last_due = int((now - self.start) // self.interval)
+        finished = self.is_finished(now)
+        if finished:  # only slots before the end time count
+            last_due = min(last_due, math.ceil((self.end - self.start) / self.interval) - 1)
         if last_due < self.next_index:
-            return Tick()
+            return Tick(finished=finished)
         due = list(range(self.next_index, last_due + 1))
         self.next_index = last_due + 1
         if busy:
-            return Tick(skipped=due, skip_reason="previous scan was still running")
+            return Tick(skipped=due, skip_reason="previous scan was still running", finished=finished)
+        if finished and now - self.end > END_GRACE_S:
+            return Tick(skipped=due, skip_reason="missed (computer asleep or busy)", finished=True)
         # Run the most recent due slot; anything older was missed.
         return Tick(fire=due[-1], skipped=due[:-1],
-                    skip_reason="missed (computer asleep or busy)")
+                    skip_reason="missed (computer asleep or busy)", finished=finished)
